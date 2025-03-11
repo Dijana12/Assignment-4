@@ -1,0 +1,106 @@
+---
+title: 'Assignment #4'
+author: "Dijana"
+date: "2025-03-10"
+output: html_document
+---
+
+### Reading Assignment 
+
+  There are several issues that can come up when including interaction terms in logit regression models due to the model’s nonlinearity. Unlike linear models, the coefficient of an interaction term in a logit regression does not have a simple, straightforward interpretation. The nonlinearity of the model means that the relationship between the independent variables and the probability of an outcome changes depending on the values of the other variables in the model. Additionally, the sign of the interaction term coefficient may not match with the expected direction of the conditional effect that originally led to its inclusion. The standard error of the coefficient also provides no clear information regarding the statistical significance of the effect. Overall, interaction terms in logit regression models cannot be interpreted as they can be in linear models. Instead, they can make it more difficult to understand how the variables interact to influence the probability of an outcome. 
+
+  A simulation-based approach can help resolve issues that arise when including interaction terms in logit regression models by providing more precise results. One reason for this is the approach implicitly correcting for bias in the formula typically used to calculate predicted probabilities. Unlike traditional methods, which rely on complex calculus-based approximations, a simulation-based approach uses straightforward numerical techniques. This enhances the intuition of researchers and readers who may not be familiar with multivariate calculus, allowing for a better understanding and interpretation of the results.
+
+### Data Analysis Assignment
+
+```{r include=FALSE}
+# Clear the memory
+rm(list=ls())
+gc()
+```
+
+```{r include=FALSE}
+# Load packages
+library(readr)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+# Import the data
+DATA <- read_csv("C:/Users/dijan/Documents/DATA 712/graduation_data.csv", show_col_types = FALSE)
+```
+
+```{r}
+# Renaming variables
+names(DATA)[names(DATA) == "Cohort Year"] <- "Cohort_year"
+names(DATA)[names(DATA) == "% Grads"] <- "Grad_percentage"
+
+# Convert Cohort_year from numeric to character
+DATA$Cohort_year <- as.character(DATA$Cohort_year)
+
+# Removing the rows where the borough is "District 79"
+library(dplyr)
+DATA <- DATA %>%
+  filter(!grepl("District 79", Borough))
+```
+
+```{r}
+# Convert graduation percentage to a binary variable (1 if the graduation percentage is 70 or above, 0 if the graduation percentage is below 70)
+DATA$Grad_binary <- ifelse(DATA$Grad_percentage >= 70, 1, 0)
+```
+
+```{r}
+# Model predicting graduation binary outcome by borough
+m1 <- glm(Grad_binary ~ Borough, family = binomial, data = DATA)
+summary(m1)
+```
+
+```{r}
+# Model predicting graduation binary outcome by borough and cohort year
+m2 <- glm(Grad_binary ~ Borough + Cohort_year, family = binomial, data = DATA)
+summary(m2)
+```
+
+```{r}
+# Model predicting graduation binary outcome by borough and cohort year, including an interaction between borough and cohort year
+m3 <- glm(Grad_binary ~ Borough * Cohort_year, family = binomial, data = DATA)
+summary(m3)
+```
+
+```{r}
+# Likelihood ratio test
+anova(m1, m2, m3, test = "Chisq")
+```
+
+```{r}
+# AIC and BIC for Model 1
+AIC_1 <- AIC(m1)
+BIC_1 <- BIC(m1)
+
+# AIC and BIC for Model 2
+AIC_2 <- AIC(m2)
+BIC_2 <- BIC(m2)
+
+# AIC and BIC for Model 3
+AIC_3 <- AIC(m3)
+BIC_3 <- BIC(m3)
+
+# Display the results
+cat("AIC and BIC for Model 1: AIC =", AIC_1, ", BIC =", BIC_1, "\n")
+cat("AIC and BIC for Model 2: AIC =", AIC_2, ", BIC =", BIC_2, "\n")
+cat("AIC and BIC for Model 3: AIC =", AIC_3, ", BIC =", BIC_3, "\n")
+```
+
+Based on the Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC) values, Model 2, which includes both borough and cohort year, is the best model. It has the lowest AIC value (226.35) and the lowest BIC value (297.35) among the three models, indicating the best balance between model fit and complexity.
+
+```{r}
+# Model 2
+summary(m2)
+```
+
+The results of Model 2 suggest that both borough and cohort year significantly influenced whether a cohort of students achieved a graduation rate of 70% or higher. Compared to the Bronx, cohorts from Brooklyn, Manhattan, Queens, and Staten Island were more likely to achieve a graduation rate of 70% or higher. Staten Island showed the highest increase in odds, with a coefficient of 8.542. The cohort year, which refers to the year when a cohort began ninth grade in a given school, also revealed a positive trend. Later cohorts (from 2006 to 2015) had significantly higher odds of achieving the 70% graduation rate. This suggests that graduation rates improved over time, as cohorts from later years were more likely to meet the 70% benchmark compared to earlier cohorts (2002 to 2005).The differences for these earlier cohorts were not shown to be statistically significant. These findings imply that certain boroughs and later cohorts saw improvements in graduation rates over time. This could have been influenced by various factors such as educational policies, school resources, and community engagement. To gain a better understanding of the factors leading to changes in graduation rates, further investigation is required. 
+
+### Programming Assignment
+
+GitHub repository link- https://github.com/Dijana12/Assignment-4
